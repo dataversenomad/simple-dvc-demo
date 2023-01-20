@@ -39,7 +39,7 @@ def predict(data):
 # calling schema
 
 def get_schema(schema_path = schema_path):
-    with open(config_path) as yaml_file:
+    with open(schema_path) as json_file:
         schema = json.load(json_file)
     return schema
 
@@ -53,7 +53,8 @@ def validate_input(dict_request):
 
     def _validate_values(col, val):
         schema = get_schema()
-        if not (schema[col]["min"] <= float(dict_request[col]) <= schema[col]["max"]):
+
+        if not (schema[col]["min"] <= float(dict_request[col]) <= schema[col]["max"]) :
             raise NotInRange
 
 
@@ -69,12 +70,24 @@ def form_response(dict_request):
         response = predict(data)
         return response
 
-def api_response(dict_request): # from app.py, it passes if request.json (then calls api_response)
+def api_response(dict_request):
     try:
         if validate_input(dict_request):
             data = np.array([list(dict_request.values())])
             response = predict(data)
             response = {"response": response}
             return response
+            
+    except NotInRange as e:
+        response = {"the_exected_range": get_schema(), "response": str(e) }
+        return response
+
+    except NotInCols as e:
+        response = {"the_exected_cols": get_schema().keys(), "response": str(e) }
+        return response
+
+
     except Exception as e:
-        response = {"the_expected_range": get_schema(), "response": str(e)}
+        response = {"response": str(e) }
+        return response
+
